@@ -108,7 +108,12 @@ where $s_k\in[0.5,3]$ minimizes the CRPS on 1{,}536 validation windows. The medi
 
 \emph{Implementation.} TensorFlow 2.21 on two NVIDIA RTX~3080 GPUs (\SI{10}{GB} each; data-parallel, fp16, peak \SI{5.8}{GB} per GPU), Adam~\cite{kingma2015adam} (learning rate $2\times10^{-4}$, cosine decay), batch size 32 and EMA weights (0.9995). Training stopped early after 75{,}000 steps (\SI{7.9}{h}); the best EMA checkpoint by validation CRPS (step 45{,}000) is used. $\eta$, $g$, $S$ and $s_k$ are chosen on validation days only; test ensembles have $M=30$ members (seed 42).
 
-\emph{Metrics.} The empirical CRPS $=\frac1M\sum_m|\hat y^{(m)}-y|-\frac{1}{2M^2}\sum_{m,m'}|\hat y^{(m)}-\hat y^{(m')}|$, averaged over windows and leads, equals the MAE for deterministic forecasts; skill is $1-\mathrm{CRPS}/\mathrm{CRPS_{SPM}}$. The central 90\% interval is scored by the Winkler score WS$_{90}$, coverage and width~\cite{vandermeer2018review}, the median by MAE, RMSE, mean bias error (MBE) and $R^2$. Generated frames (first member) are compared with the observed frames by SSIM and by the cosine similarity of VGG-16 features (VGG-CS)~\cite{simonyan2015vgg}.
+\emph{Metrics.} For an observation $y$ and ensemble members $\{\hat y^{(m)}\}_{m=1}^{M}$, the empirical continuous ranked probability score~\cite{lauret2019verification} is
+\begin{equation}
+\mathrm{CRPS}=\frac1M\sum_{m}\big|\hat y^{(m)}-y\big|-\frac{1}{2M^2}\sum_{m,m'}\big|\hat y^{(m)}-\hat y^{(m')}\big|,
+\label{eq:crps}
+\end{equation}
+averaged over windows and leads. The first term rewards accuracy and the second rewards spread; for a deterministic forecast ($M{=}1$) it equals the MAE. Skill is $1-\mathrm{CRPS}/\mathrm{CRPS_{SPM}}$. The central 90\% interval is scored by the Winkler score WS$_{90}$, coverage and width~\cite{vandermeer2018review}, the median by MAE, RMSE, mean bias error (MBE) and $R^2$. Generated frames are those of the first ensemble member, i.e., one unselected sample out of $M{=}30$, and are compared with the observed frames by SSIM and by the cosine similarity of VGG-16 features (VGG-CS)~\cite{simonyan2015vgg}.
 
 \begin{figure*}[t]
 \centering
