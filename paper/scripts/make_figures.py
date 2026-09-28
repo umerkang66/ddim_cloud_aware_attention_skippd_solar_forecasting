@@ -220,7 +220,7 @@ for w, wtitle in windows:
 for ri, (_, rl) in enumerate(rows):
     y = H - 0.26 - (ri + 1) * tw - ri * gap_t + tw / 2
     fig.text((lab_w - 0.03) / W, y / H, rl, ha="right", va="center", fontsize=6.6, rotation=0)
-# B2 inset: the only generated frames that B2 publishes (one member, window not reported)
+# B2 inset: generated frames of our earlier model B2 (one member, a different window)
 fig.text((x0 + b2w / 2) / W, (H - 0.05) / H, "(d) B2, one member", ha="center", va="top", fontsize=6.8)
 ytop = H - 0.26 - tw
 ymid = ytop - (tw + 2 * gap_t) * 0.5
@@ -228,7 +228,7 @@ for k, lbl in enumerate(["+3", "+7", "+11", "+15"]):
     r, c = divmod(k, 2)
     a = add(x0 + c * (tw + gap_t), ymid - r * (tw + gap_t) + 0.5 * tw, tile(f"b2_gen_{k}.png"))
     a.text(0.04, 0.96, lbl, transform=a.transAxes, color="white", fontsize=5.6, va="top", ha="left")
-fig.text((x0 + b2w / 2) / W, (H - 0.26 - 3 * tw - 2 * gap_t + 0.01) / H, "window not reported",
+fig.text((x0 + b2w / 2) / W, (H - 0.26 - 3 * tw - 2 * gap_t + 0.01) / H, "different window",
          ha="center", va="bottom", fontsize=5.8, style="italic", color="#444444")
 save(fig, "fig_images.pdf")
 
