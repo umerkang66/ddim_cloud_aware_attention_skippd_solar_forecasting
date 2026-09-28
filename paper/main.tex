@@ -1,0 +1,227 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{siunitx}
+\sisetup{detect-weight=true, detect-family=true}
+\usepackage[hidelinks]{hyperref}
+\graphicspath{{figures/}}
+
+\newcommand{\Pclr}{P^{\mathrm{clr}}}
+\newcommand{\Pspm}{\hat P^{\mathrm{SPM}}}
+\newcommand{\BOne}{B1}
+\newcommand{\BTwo}{B2}
+\newcommand{\BThree}{B3}
+
+\begin{document}
+\bstctlcite{IEEEexample:BSTcontrol}
+
+\title{CSR-MMDiff: Clear-Sky-Residual Diffusion for\\Calibrated Probabilistic PV Forecasting}
+
+\author{\IEEEauthorblockN{Muhammad Umer, Haseeb Khan, Dr. Jameel Ahmad, Dr. Abdul Hameed}
+\IEEEauthorblockA{\textit{Department of Computer Science, SST, University of Management and Technology}, Lahore 54770, Pakistan\\
+f2023266912@umt.edu.pk, f20232661009@umt.edu.pk, jameel.ahmad@umt.edu.pk, abdul\_hameed@umt.edu.pk}}
+
+\maketitle
+
+\begin{abstract}
+Joint diffusion models of future sky images and photovoltaic (PV) power give strong probabilistic forecasts, but our compact 15-step re-implementation of PV-MM-Diffusion was under-dispersed, biased low and weaker than persistence as a point forecaster, and its generated frames blurred within minutes. We propose CSR-MMDiff, which diffuses only the \emph{deviation} from a physical prior: PV power relative to clear-sky smart persistence and sky images relative to the last frame. It adds clear-sky conditioning, cloud-aware cross-modal attention, physically projected DDIM steps and a validation-fitted spread calibration. On the same 1{,}340 all-sky SKIPP'D test windows, a 30-member, 20-step ensemble of the \SI{5.1}{M}-parameter model reaches a CRPS of \SI{0.943}{kW}, which is 28.7\% below smart persistence and 22.9\% below our previous model. Its 90\% intervals cover 83.2\% of observations (previously 77.9\%) while being narrower, its median beats persistence (MAE 1.243 vs.\ \SI{1.322}{kW}), generated frames keep an SSIM of 0.724 at +16\,min (previously 0.423), and sampling takes \SI{54}{ms} per member. On a cloudy subset that mirrors the PV-MM-Diffusion protocol, the skill is 25.4\%. Coverage remains below nominal, and on the most variable days the median lags ramps.
+\end{abstract}
+
+\begin{IEEEkeywords}
+solar forecasting, photovoltaic power, sky images, diffusion models, DDIM, clear-sky model, probabilistic forecasting, calibration
+\end{IEEEkeywords}
+
+\section{Introduction}
+A passing cloud can halve the output of a PV plant within a minute. Such ramps are invisible to numerical weather prediction at intra-hour horizons~\cite{antonanzas2016review}, so sky cameras have become the standard input for PV nowcasting~\cite{sun2019sunset,paletta2023advances}. Grid operators need the \emph{distribution} of future output~\cite{vandermeer2018review}, while squared-error regressors collapse to a smoothed persistence~\cite{paletta2021benchmarking}. Generative models address this by sampling plausible futures~\cite{nie2024skygpt,ruan2026skyevo}. PV-MM-Diffusion~\cite{huang2026pvmm} (\BThree) denoises future sky frames and PV power jointly in one reverse process and outperforms a SkyGPT$\to$U-Net pipeline.
+
+Two earlier studies of this model class by our group expose its weaknesses. Our 15-step DDIM re-implementation~\cite{umer2026fast} (\BOne) had the best CRPS in its study, but its 90\% intervals covered 77.9\% of observations, its median was biased low and worse than persistence, and its frames lost structure within minutes. A matched-checkpoint study~\cite{ullah2026matched} (\BTwo) found that 10-step DDIM cut latency 100-fold relative to DDPM but reduced 90\% coverage from 87.5\% to 64.8\%. Both models spend capacity re-generating what is already known: the diurnal PV cycle and the static sky. Our contributions are:
+\begin{itemize}
+\item \emph{CSR-MMDiff}, a \textbf{clear-sky-residual} diffusion target that makes smart persistence and the last frame the zero point of the model, with \textbf{physics-informed conditioning} on clear-sky power known ahead and modality flags;
+\item a \textbf{cloud-aware RS-PV-MMA} with learned spatial pooling, and a \textbf{projected DDIM} sampler with \textbf{lead-wise spread calibration};
+\item a like-for-like comparison with \BOne\ on its 1{,}340 test windows and a protocol-matched one with \BTwo\ and \BThree, covering probabilistic and point accuracy, calibration and image quality.
+\end{itemize}
+
+\section{Related Work}
+Sky-image regressors such as SUNSET~\cite{sun2019sunset} predict PV from stacked images and PV history; later models fuse images and time series with transformers~\cite{jiang2026sft} or physics-aware retrieval~\cite{fan2026parapv}. SkyGPT~\cite{nie2024skygpt} and SkyEvo~\cite{ruan2026skyevo} generate future skies and map them to PV in a second stage, whereas PV-MM-Diffusion~\cite{huang2026pvmm} adapts MM-Diffusion~\cite{ruan2023mmdiffusion} to generate both modalities at once. Diffusion~\cite{ho2020ddpm} also serves video~\cite{ho2022video}, time series~\cite{rasul2021timegrad,tashiro2021csdi} and precipitation nowcasting~\cite{gao2023prediff,leinonen2023ldcast}; DDIM~\cite{song2021ddim} and DPM-Solver++~\cite{lu2022dpmsolverpp} shorten sampling. Proper scores such as CRPS must be complemented by coverage diagnostics~\cite{gneiting2007calibration,lauret2019verification}. Unlike prior joint models, CSR-MMDiff places a physical forecast \emph{inside} the diffusion target instead of only using it as a reference.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig_arch.pdf}
+\caption{CSR-MMDiff on a real test window (2019-07-14 08:12, as in \BOne's Fig.~1). Both branches diffuse residuals: frames relative to the last frame, PV relative to the clear-sky smart-persistence anchor (orange); the physics prior and flags are extra input channels. Cloud-aware RS-PV-MMA (CA-MMA) couples the branches. Outputs after 20 projected DDIM steps: generated (member 1) vs.\ observed frames, and the calibrated 30-member PV forecast (band 5--95\%, median, observed circles).}
+\label{fig:arch}
+\end{figure*}
+
+\section{Method}
+\subsection{Clear-Sky-Residual Formulation}
+Let $\mathbf I_t\in\mathbb R^{64\times64\times3}$ be the sky image and $P_t\in[0,P_{\max}]$ the PV power ($P_{\max}=\SI{30}{kW}$), sampled every 2\,min. Given the history $\mathcal H=\{\mathbf I_{t-2j},P_{t-2j}\}_{j=0}^{7}$, the model samples the future $\{\mathbf I_{t+k},P_{t+k}\}$, $k\in\{2,\dots,16\}$\,min. The clear-sky power $\Pclr$ is the pvlib Ineichen clear-sky irradiance~\cite{holmgren2018pvlib} scaled to $P_{\max}$; the time zone of the unlabelled SKIPP'D timestamps is chosen by maximum correlation with the measured PV (America/Los\_Angeles, $\rho=0.881$). Smart persistence (SPM) holds the clear-sky index constant,
+\begin{equation}
+\Pspm_{t+k}=k_t\,\Pclr_{t+k},\qquad k_t=\mathrm{clip}\big(P_t/\Pclr_t,\,0,\,2.5\big),
+\end{equation}
+and falls back to plain persistence when $\Pclr_t<\SI{1}{kW}$. Instead of the raw future, CSR-MMDiff diffuses the residuals
+\begin{equation}
+x^P_{0,k}=\frac{P_{t+k}-\Pspm_{t+k}}{s_P},\qquad \mathbf x^I_{0,k}=\frac{\mathbf I_{t+k}-\mathbf I_t}{s_I},
+\label{eq:res}
+\end{equation}
+with $s_P=\SI{3.96}{kW}$ and $s_I=0.165$ chosen on the training windows to give the targets a standard deviation of 0.5. The zero residual thus equals persistence, and the network only has to model cloud-induced deviations. When the PV history is withheld, the anchor becomes $\bar k\,\Pclr_{t+k}$ with the climatological index $\bar k=0.842$.
+
+\subsection{Physics-Informed Conditioning}
+Each of the 16 frames carries seven PV channels (normalized PV history, noisy residual, future flag, $\Pclr/P_{\max}$ known for past \emph{and} future frames, level given by history or anchor, and availability flags $a_P,a_I$) and eight image channels (history frame or anchor frame $\mathbf I_t$, noisy residual, future flag, $a_I$). The flags remove an ambiguity of \BOne, whose zero placeholder for a missing modality coincided with \SI{15}{kW} in its $[-1,1]$ scaling. As in~\cite{huang2026pvmm}, training windows use both modalities, images only or PV only (probabilities 0.7/0.15/0.15).
+
+\subsection{Coupled U-Net with Cloud-Aware RS-PV-MMA}
+The denoiser (Fig.~\ref{fig:arch}) has two four-level branches, widths $(32,64,128,256)$ and FiLM~\cite{perez2018film} timestep modulation; image blocks factorize spatial and temporal convolutions, PV blocks add temporal self-attention~\cite{vaswani2017attention}. \BOne\ and \BTwo\ pool each image frame to one token by global averaging, which discards \emph{where} clouds are relative to the sun. CA-MMA instead learns $K=4$ spatial attention maps over the positions of the feature map $\mathbf h_{t}$:
+\begin{equation}
+\begin{aligned}
+\mathbf A_{t}&=\mathrm{softmax}_{hw}\big(\mathbf W\mathbf h_{t,hw}\big),\\
+\mathbf z_t&=\big\Vert_{\kappa=1}^{K}\textstyle\sum_{hw}A_{t,hw\kappa}\,\mathbf h^{(\kappa)}_{t,hw},
+\end{aligned}
+\end{equation}
+where $\mathbf h^{(\kappa)}$ is the $\kappa$-th channel group and $\mathbf W$ is zero-initialized, so training starts from average pooling. Cross-attention between the PV and image tokens is restricted to $|i-j|\le w$ with $w=1,4,8$ at encoder levels 2--4; a fourth fusion ($w=4$) at decoder level 2 passes features of the generated frames to the PV head. Image tokens are rolled by $s\in\{-1,0,1\}$ during training, and output projections are zero-initialized. The model has \SI{5.09}{M} parameters.
+
+\subsection{Training Objective}
+We use v-prediction~\cite{salimans2022progressive} on a cosine schedule~\cite{nichol2021improved} with $T=1000$. With $\mathbf x_\tau=\sqrt{\bar\alpha_\tau}\mathbf x_0+\sqrt{1-\bar\alpha_\tau}\bm\epsilon$ and $\mathbf v=\sqrt{\bar\alpha_\tau}\bm\epsilon-\sqrt{1-\bar\alpha_\tau}\mathbf x_0$, the loss is
+\begin{equation}
+\mathcal L=\mathbb E\Big[\omega_\tau\big(\Vert\mathbf v^P-\hat{\mathbf v}^P\Vert^2+\lambda_I\,a_I\,\Vert\mathbf v^I-\hat{\mathbf v}^I\Vert^2\big)\Big],
+\end{equation}
+with Min-SNR weight $\omega_\tau=\min(\mathrm{SNR}_\tau,5)/(\mathrm{SNR}_\tau+1)$~\cite{hang2023minsnr}, $\lambda_I=0.5$, and the image loss masked when images are withheld.
+
+\subsection{Projected DDIM Sampling and Spread Calibration}
+Sampling starts from $\mathbf x_T\sim\mathcal N(\mathbf 0,\mathbf I)$ and runs $S=20$ DDIM~\cite{song2021ddim} steps. At every step the clean estimate is projected onto the feasible set $\mathcal C$:
+\begin{equation}
+\hat{\mathbf x}_0=\Pi_{\mathcal C}\big(\sqrt{\bar\alpha_\tau}\mathbf x_\tau-\sqrt{1-\bar\alpha_\tau}\hat{\mathbf v}\big),
+\end{equation}
+where $\mathcal C$ requires $0\le\Pspm_{t+k}+s_P\hat x^P_{0,k}\le P_{\max}$ and all pixels to lie in $[-1,1]$. The noise estimate is recomputed from the projected $\hat{\mathbf x}_0$ before the update. The ensemble $\{\hat P^{(m)}_{t+k}\}_{m=1}^{M}$ with median $\tilde P_{t+k}$ is then recalibrated per lead time,
+\begin{equation}
+\hat P'^{(m)}_{t+k}=\mathrm{clip}\big(\tilde P_{t+k}+s_k(\hat P^{(m)}_{t+k}-\tilde P_{t+k}),\,0,\,P_{\max}\big),
+\label{eq:cal}
+\end{equation}
+where $s_k\in[0.5,3]$ minimizes the CRPS on 1{,}536 validation windows. The median, and hence every point metric, is unchanged. We also evaluated stochastic sampling ($\eta>0$) and a sky-image guidance $\hat{\mathbf v}^P=\hat{\mathbf v}^P_{\mathrm{SI+PV}}+g(\hat{\mathbf v}^P_{\mathrm{SI+PV}}-\hat{\mathbf v}^P_{\mathrm{PV}})$, which the placeholder training makes available at no cost.
+
+\section{Experimental Setup}
+\emph{Data and protocol.} SKIPP'D~\cite{nie2023skippd} pairs 64$\times$64 sky images at 1-min resolution with the power of a \SI{30}{kW} array at Stanford. As in \BOne, 16-frame windows at 2-min cadence never cross days or logging gaps; training and validation are split by calendar day (447/50 days, 99{,}473/11{,}096 windows), and the test set comprises \BOne's 1{,}340 windows on 20 clear, partly cloudy and overcast days. To mirror \BThree, which tests on five multi-cloud days with clear-sky samples removed, we also form a \emph{cloudy subset} from the five most variable test days (2017-09-20, 2018-01-25, 2018-10-04, 2019-05-27, 2019-10-19). It keeps daytime windows at 2-min stride that contain a 2-min PV change of at least \SI{1}{kW}, which gives 1{,}199 windows.
+
+\emph{Baselines.} SPM; a probabilistic persistence ensemble (PeEn) that adds training-residual quantiles, binned by lead time and clear-sky power, to SPM; the joint DDIM of \BOne\ and its two-stage video$\to$PV pipeline, evaluated on the identical windows; the DDIM ensembles of \BTwo; and PV-MM-Diffusion and SkyGPT$\to$U-Net as reported in \BThree. We also sample the same trained CSR-MMDiff with only PV history or only sky images.
+
+\emph{Implementation.} TensorFlow 2.21 on two data-parallel GPUs with fp16, Adam~\cite{kingma2015adam} (learning rate $2\times10^{-4}$, cosine decay), batch size 32 and EMA weights (0.9995). Training stopped early after 75{,}000 steps (\SI{7.9}{h}); the best EMA checkpoint by validation CRPS (step 45{,}000) is used. $\eta$, $g$, $S$ and $s_k$ are chosen on validation days only; test ensembles have $M=30$ members (seed 42).
+
+\emph{Metrics.} The empirical CRPS $=\frac1M\sum_m|\hat y^{(m)}-y|-\frac{1}{2M^2}\sum_{m,m'}|\hat y^{(m)}-\hat y^{(m')}|$, averaged over windows and leads, equals the MAE for deterministic forecasts; skill is $1-\mathrm{CRPS}/\mathrm{CRPS_{SPM}}$. The central 90\% interval is scored by the Winkler score WS$_{90}$, coverage and width~\cite{vandermeer2018review}, the median by MAE, RMSE, mean bias error (MBE) and $R^2$. Generated frames (first member) are compared with the observed frames by SSIM and by the cosine similarity of VGG-16 features (VGG-CS)~\cite{simonyan2015vgg,lee2018savp}.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig_lead.pdf}
+\caption{Performance by lead time on the 1{,}340 test windows, CSR-MMDiff vs.\ the joint DDIM of \BOne\ (curves taken from its Fig.~2). (a) CRPS (MAE for SPM). (b) Coverage and (c) mean width of the 90\% interval. (d) SSIM of generated frames (first member) and of last-frame persistence against the observed frames. (e) MAE of the ensemble median.}
+\label{fig:lead}
+\end{figure*}
+
+\section{Results}
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig_images.pdf}
+\caption{Observed and generated sky images (first ensemble member) on the lowest-, median- and highest-variability daytime test windows. (a)--(c) use the identical windows and observed frames of \BOne's Fig.~4, so CSR-MMDiff (middle row) and \BOne\ (bottom row) are compared on the same inputs. (d) The only generated frames published by \BTwo\ (one member, lead times relative to its reference time).}
+\label{fig:images}
+\end{figure*}
+
+\begin{table}[t]
+\caption{Accuracy on the 1{,}340 SKIPP'D Test Windows (2--16\,min) of \BOne. Skill vs.\ Smart Persistence; Nominal Coverage 90\%.}
+\label{tab:main}
+\centering
+\setlength{\tabcolsep}{2.6pt}
+\footnotesize
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+Method & CRPS & Skill & WS$_{90}$ & Cov. & MAE & RMSE & MBE \\
+ & (kW) & (\%) & (kW) & (\%) & (kW) & (kW) & (kW) \\
+\midrule
+Smart persistence$^\dagger$ & 1.322 & 0.0 & -- & -- & 1.322 & 3.087 & $-$0.04 \\
+Two-stage \BOne$^\dagger$ & 1.498 & $-$13.4 & -- & -- & 1.498 & \textbf{2.838} & 0.17 \\
+PeEn & 1.177 & 11.0 & 18.92 & 76.9 & 1.315 & 3.087 & 0.04 \\
+Joint DDIM v1 \BOne & 1.222 & 7.5 & 10.50 & 77.9 & 1.684 & 2.960 & $-$0.76 \\
+\midrule
+Ours, PV only & 1.579 & $-$19.4 & 17.20 & 99.6 & 1.568 & 2.864 & 0.60 \\
+Ours, SI only & 1.373 & $-$3.9 & 12.60 & 89.4 & 1.812 & 3.335 & 0.53 \\
+Ours, uncalibrated & 0.995 & 24.8 & 12.33 & 57.4 & \textbf{1.243} & 2.878 & 0.21 \\
+\textbf{Ours (CSR-MMDiff)} & \textbf{0.943} & \textbf{28.7} & \textbf{9.15} & \textbf{83.2} & \textbf{1.243} & 2.878 & 0.21 \\
+\bottomrule
+\multicolumn{8}{@{}p{0.98\columnwidth}@{}}{\scriptsize $^\dagger$Deterministic: CRPS equals MAE and interval scores are undefined. \BOne\ rows as reported in~\cite{umer2026fast}; $R^2$: SPM 0.824, two-stage 0.851, \BOne\ 0.838, ours 0.847.}
+\end{tabular}
+\end{table}
+
+\emph{Probabilistic accuracy.} Table~\ref{tab:main} compares all methods on identical windows. CSR-MMDiff lowers the CRPS of the \BOne\ joint model from 1.222 to \SI{0.943}{kW} ($-$22.9\%) and its WS$_{90}$ from 10.50 to \SI{9.15}{kW}. Skill over SPM rises from 7.5\% to 28.7\%, and the CRPS is 20\% below PeEn. The gain holds at every lead (Fig.~\ref{fig:lead}(a)), from 23\% skill at +2\,min, where \BOne\ was worse than SPM, to about 30\% beyond +10\,min. Withholding either modality removes the gain (PV only: \SI{1.579}{kW}, with intervals inflated by the full model's spread factors; sky images only: \SI{1.373}{kW}), so both are needed.
+
+\emph{Calibration.} The raw ensemble is sharp but under-dispersed: its 90\% intervals cover only 57.4\% of observations. The fitted spread factors are almost constant ($s_k=2.20,2.25,2.20,2.15,2.00,2.05,2.00,1.95$ from +2 to +16\,min), which points to a systematic rather than lead-dependent deficit. Calibration raises coverage to 83.2\%, lowers WS$_{90}$ by 25.8\% and the CRPS by 5.2\%. Coverage stays between 81\% and 85\% at every lead (Fig.~\ref{fig:lead}(b)), whereas \BOne\ decayed from 81.6\% to 75.1\%. Our intervals are also \emph{narrower} (2.7--\SI{4.7}{kW} vs.\ 3.7--\SI{6.1}{kW}; Fig.~\ref{fig:lead}(c)), so the model is both sharper and more reliable, although coverage is still 6.8 points below nominal.
+
+\emph{Point accuracy.} Because the zero residual equals SPM, the median no longer falls behind persistence: its MAE of \SI{1.243}{kW} is 6.0\% below SPM and 26.2\% below \BOne, and the low bias of \BOne\ ($-$\SI{0.76}{kW}) becomes a small positive one (+\SI{0.21}{kW}). The 99th-percentile absolute error drops from 14.72 (SPM) to \SI{13.11}{kW}; the two-stage pipeline keeps the lowest RMSE. On the three clear days of Fig.~\ref{fig:days} the median tracks the observation (MAE 0.10--\SI{0.13}{kW} vs.\ 0.74--\SI{1.38}{kW} for \BOne) without \BOne's spurious afternoon dips. On the two most variable days, however, it reproduces ramps late, like persistence, and its +16\,min MAE exceeds \BOne's (3.44 vs.\ 2.94 and 4.05 vs.\ \SI{3.12}{kW}), although its interval covers more observations (75\% vs.\ 62\%).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_days.pdf}
+\caption{16-min-ahead forecasts of CSR-MMDiff on the six test days of \BOne's Fig.~3, from least (a) to most (f) variable. Panel titles give the +16\,min MAE of the median and the 90\% coverage, with \BOne's values in brackets.}
+\label{fig:days}
+\end{figure}
+
+\begin{table}[t]
+\caption{Cross-Study Comparison. Each Study Uses Its Own Test Days and SPM; Only Relative Skill Is Comparable.}
+\label{tab:cross}
+\centering
+\setlength{\tabcolsep}{2.4pt}
+\footnotesize
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+Method & Test protocol & CRPS & WS$_{90}$ & Cov. & Skill \\
+ & & (kW) & (kW) & (\%) & (\%) \\
+\midrule
+PeEn & \multirow{2}{*}{\shortstack[l]{5 variable days,\\1{,}199 cloudy win.}} & 3.488 & 58.00 & 38.5 & 8.9 \\
+\textbf{Ours (CSR-MMDiff)} & & \textbf{2.856} & 26.95 & \textbf{76.1} & 25.4 \\
+\midrule
+SkyGPT$\to$U-Net~\cite{nie2024skygpt} & \multirow{2}{*}{\shortstack[l]{\BThree: 5 cloudy\\days, 2{,}582 win.}} & 3.21 & 35.62 & -- & 12.5 \\
+PV-MM-Diffusion \BThree & & \textbf{2.63} & \textbf{21.46} & -- & \textbf{28.3} \\
+\midrule
+DDIM $S{=}10$, $\eta{=}0.5$ \BTwo & 20 days, +16\,min & 1.144 & 11.80 & $\approx$70 & 41.4$^\ast$ \\
+Ours at +16\,min & 20 days, +16\,min & 1.198 & -- & 83.1 & 29.7 \\
+\bottomrule
+\multicolumn{6}{@{}p{0.98\columnwidth}@{}}{\scriptsize Skill vs.\ each study's SPM (\BThree: \SI{3.67}{kW}; ours, cloudy: \SI{3.830}{kW}). $^\ast$6{,}627 windows, solar-geometry SPM surrogate; 64.8\% coverage on \BTwo's matched subset (DDPM: 87.5\%).}
+\end{tabular}
+\end{table}
+
+\emph{Comparison with \BTwo\ and \BThree.} On the cloudy subset (Table~\ref{tab:cross}), CSR-MMDiff reduces the CRPS of SPM by 25.4\% (uncalibrated: 20.4\%) and that of PeEn by 18.1\%. PV-MM-Diffusion reports 28.3\% over its SPM with 60-step DPM-Solver++ and eight training GPUs (\SI{45.4}{s} for 10 members), and SkyGPT$\to$U-Net 12.5\%. Our relative gain is thus close to the full-size reference at a fraction of the cost, but coverage drops to 76.1\% on these windows. \BTwo\ reports a higher endpoint skill against its own SPM surrogate, with intervals covering only 68--71\% of observations; our endpoint coverage is 83.1\%.
+
+\emph{Generated sky images.} The image residual anchors each generated frame to the scene: sun position, lens rings and cloud layout persist (Fig.~\ref{fig:images}), whereas \BOne's frames of the same windows degrade into haze. SSIM falls only from 0.825 to 0.724 over 16\,min (\BOne: 0.787 to 0.423), and VGG-CS rises from 0.862 to 0.959 (Table~\ref{tab:img}). Our SSIM, however, stays within 0.01 of last-frame persistence (Fig.~\ref{fig:lead}(d)) and the clouds of the cloudy window barely move, so the PV gain stems from the residual formulation rather than explicit advection. \BTwo\ publishes frames of one unreported window only (Fig.~\ref{fig:images}(d)); \BThree's best-of-$N$ VGG-CS on cloudy days, with a different VGG layer, is indicative only.
+
+\begin{table}[t]
+\caption{Generated-Image Quality (Averaged over Lead Times).}
+\label{tab:img}
+\centering
+\setlength{\tabcolsep}{3pt}
+\footnotesize
+\begin{tabular}{@{}llccc@{}}
+\toprule
+Method & Sample & VGG-CS & SSIM\,+2 & SSIM\,+16 \\
+\midrule
+Last-frame persistence & -- & -- & \textbf{0.826} & 0.717 \\
+Joint DDIM v1 \BOne & member 1 & 0.862 & 0.787 & 0.423 \\
+\textbf{Ours (CSR-MMDiff)} & member 1 & \textbf{0.959} & 0.825 & \textbf{0.724} \\
+DDIM \BTwo & member 1 & \multicolumn{3}{c}{not reported (qualitative only)} \\
+\midrule
+SkyGPT$^\ast$~\cite{nie2024skygpt} & best of 10 & 0.758 & -- & -- \\
+PV-MM-Diffusion$^\ast$ \BThree & best of 30 & 0.774 & -- & -- \\
+\bottomrule
+\multicolumn{5}{@{}p{0.96\columnwidth}@{}}{\scriptsize $^\ast$From \BThree's Fig.~5(a): five cloudy test days, leads 1--15\,min, different VGG-16 feature layer.}
+\end{tabular}
+\end{table}
+
+\emph{Sampler and cost.} On 512 validation windows (SPM: \SI{0.832}{kW}), 5, 10, 20 and 50 DDIM steps give a CRPS of 0.653, 0.640, 0.617 and \SI{0.613}{kW} at 13, 24, 51 and \SI{134}{ms} per member. Deterministic sampling ($\eta=0$) beats $\eta=0.5$ and 1 (0.612 vs.\ 0.632 and \SI{0.650}{kW}), and sky-image guidance hurts ($g=0.5$: 0.648; $g=1$: 0.664), so spread is best added by calibration. Test sampling takes \SI{54.1}{ms} per member on two GPUs (\BOne: \SI{155.5}{ms} on one RTX~3070 at 15 steps).
+
+\section{Discussion and Limitations}
+Placing smart persistence inside the diffusion target turns the generative model into a probabilistic \emph{correction} of a physical forecast. This removes the bias of \BOne\ and lets a \SI{5}{M}-parameter model approach the relative skill of a much larger reference, but the median inherits the lag of persistence on days with frequent ramps, the image branch learns little advection, and coverage is 6.8 points below nominal overall and 13.9 points below on cloudy windows, because one factor per lead cannot adapt to the weather regime. Regime-conditional or conformal recalibration and a longer image context are natural next steps. The study covers one site, one horizon, 20 test days and one training run; the \BOne\ baselines are taken from its paper rather than re-run, and the \BTwo\ and \BThree\ numbers come from different test protocols.
+
+\section{Conclusion}
+Diffusing sky-image and PV residuals with respect to a clear-sky persistence prior lowers the CRPS of our previous joint model by 22.9\% to \SI{0.943}{kW} (28.7\% skill over smart persistence), raises 90\% coverage from 77.9\% to 83.2\% with narrower intervals, beats persistence as a point forecaster and keeps generated frames sharp at \SI{54}{ms} per member. Closing the coverage gap on cloudy days is the main open problem.
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

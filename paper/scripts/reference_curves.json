@@ -1,0 +1,26 @@
+{
+  "_provenance": {
+    "b1": "Joint DDIM v1 (baseline1.pdf, Fig. 2). Decoded from the vector paths of the PDF with pymupdf (exact plotted coordinates mapped through the axis ticks). Check: mean CRPS 1.2225 kW vs 1.222 kW in its Table II; its SPM curve equals our SPM MAE to 4 decimals.",
+    "ours.crps_by_lead": "CSR-MMDiff (calibrated) per-lead CRPS, read from the notebook dashboard (showcase_15min_dashboard.png) with the SPM markers (known exactly from the CSV) as the axis calibration; max calibration residual 3 px = 0.005 kW. Check: mean 0.9420 vs 0.9427 kW in results_15min.json.",
+    "ours.ssim_*": "Printed by notebook Cell 18 (sky-image comparison table).",
+    "b3_vggcs_test": "PV-MM-Diffusion paper (baseline3.pdf) Fig. 5(a), test set, lead 1..15 min (odd), best-of-N selection. Decoded from vector paths; y ticks 0.62..0.86."
+  },
+  "ours": {
+    "crps_by_lead": [0.5663, 0.7165, 0.8808, 0.9480, 1.0591, 1.0716, 1.0951, 1.1984],
+    "ssim_gen": [0.825, 0.791, 0.773, 0.761, 0.750, 0.741, 0.733, 0.724],
+    "ssim_persistence": [0.826, 0.792, 0.772, 0.758, 0.745, 0.735, 0.727, 0.717]
+  },
+  "b1": {
+    "crps": [0.806, 1.025, 1.142, 1.217, 1.338, 1.347, 1.418, 1.487],
+    "coverage": [81.64, 79.77, 79.55, 78.13, 78.35, 76.12, 74.77, 75.15],
+    "width": [3.689, 4.683, 5.124, 5.393, 5.587, 5.738, 5.875, 6.096],
+    "ssim": [0.787, 0.719, 0.650, 0.595, 0.542, 0.488, 0.447, 0.423],
+    "mae_median": [1.102, 1.415, 1.571, 1.692, 1.857, 1.858, 1.936, 2.040],
+    "two_stage_mae": [1.183, 1.286, 1.409, 1.427, 1.583, 1.575, 1.698, 1.822]
+  },
+  "b3_vggcs_test": {
+    "PV-MM-Diffusion (best of 30)": [0.842, 0.805, 0.783, 0.768, 0.758, 0.750, 0.744, 0.739],
+    "SkyGPT (best of 10)": [0.797, 0.781, 0.768, 0.758, 0.749, 0.741, 0.737, 0.732],
+    "ConvLSTM": [0.833, 0.783, 0.756, 0.738, 0.726, 0.717, 0.710, 0.704]
+  }
+}
