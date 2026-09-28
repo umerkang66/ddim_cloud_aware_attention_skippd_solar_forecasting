@@ -52,7 +52,7 @@ Sky-image regressors such as SUNSET~\cite{sun2019sunset} predict PV from stacked
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{fig_arch.pdf}
-\caption{CSR-MMDiff, shown on the real test window 2019-07-14 08:12. Top: sky-image (blue slabs: resolution/channels) and PV (orange: channels) U-Net branches coupled by CA-MMA, conditioned on the physics prior, sampled by projected DDIM and calibrated; generated frames (member 1) vs.\ observed, and the 30-member PV forecast (band 5--95\%, median, observed circles, SPM dashed). Bottom: (b) CA-MMA, (c) the clear-sky residual target, (d) one projected DDIM step and the spread calibration (raw vs.\ calibrated 90\% band of this window).}
+\caption{CSR-MMDiff coupled U-Net and projected DDIM sampling on a real test window (2019-07-14 08:12). Inputs: 8 history frames and PV readings followed by the noisy future residuals (frames relative to the last frame, PV relative to the clear-sky smart-persistence anchor, orange). Image blocks are labelled with spatial size and channels, PV blocks with channels; CA-MMA with window $w$ couples the branches, $\mathbf e_\tau$ enters every block and the clear-sky prior conditions the PV branch. Outputs after 20 steps: generated frames of the first member vs.\ observed ones, and the calibrated 30-member PV forecast (band: 5--95\%; line: median; circles: observed).}
 \label{fig:arch}
 \end{figure*}
 
