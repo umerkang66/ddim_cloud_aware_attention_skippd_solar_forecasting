@@ -1,0 +1,8 @@
+Method,CRPS (kW),WS90 (kW),Cov90
+Smart persistence (SPM),3.8297991515529515,,
+Probabilistic persistence (PeEn),3.487538912638125,57.996390063311914,0.3846955796497081
+Two-stage (video -> PV),,,
+CSR-MMDiff (uncalibrated),3.049844439217988,37.275070948021536,0.4407839866555463
+CSR-MMDiff (calibrated),2.8559420931588306,26.952019310328147,0.7610508757297748
+[lit.] SkyGPT -> U-Net (Huang et al. 2026),3.21,35.62,
+"[lit.] PV-MM-Diffusion, 30 samples (Huang et al. 2026)",2.63,21.46,
