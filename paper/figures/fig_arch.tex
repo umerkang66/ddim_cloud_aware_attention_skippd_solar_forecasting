@@ -81,9 +81,9 @@
   \draw[flow] (P\a.east) -- (P\b.west);
 }
 % skip connections (concatenation)
-\draw[skip] (IN0) -- ++(0,0.34) -| (IN6);
-\draw[skip] (IN1) -- ++(0,0.34) -| (IN5);
-\draw[skip] (IN2) -- ++(0,0.30) -| (IN4);
+\draw[skip] (IN0) -- (IN0 |- 0,7.10) -| (IN6);
+\draw[skip] (IN1) -- (IN1 |- 0,6.99) -| (IN5);
+\draw[skip] (IN2) -- (IN2 |- 0,6.88) -| (IN4);
 \draw[skip] (P0.south) -- ++(0,-0.50) -| (P6.south);
 \draw[skip] (P1.south) -- ++(0,-0.38) -| (P5.south);
 \draw[skip] (P2.south) -- ++(0,-0.26) -| (P4.south);
@@ -95,9 +95,9 @@
   \draw[couple] (IS\k) -- (M\k.north);
   \draw[couple] (M\k.south) -- (P\k.north);
 }
-\draw[black!30, line width=0.4pt, dash pattern=on 0.8pt off 1.2pt] ($(P3)!0.5!(P4)+(0,-0.28)$) -- ($(IS3)!0.5!(IS4)+(0,0.95)$);
-\node[lbl, text=black!55, anchor=east] at ($(P3)!0.5!(P4)+(-0.04,1.42)$) {encoder};
-\node[lbl, text=black!55, anchor=west] at ($(P3)!0.5!(P4)+(0.04,1.42)$) {decoder};
+\draw[black!30, line width=0.4pt, dash pattern=on 0.8pt off 1.2pt] ($(P3)!0.5!(P4)+(0,-0.22)$) -- ($(P3)!0.5!(P4)+(0,1.22)$);
+\node[lbl, text=black!55] at (7.48,5.42) {encoder};
+\node[lbl, text=black!55] at (9.64,5.42) {decoder};
 
 % inputs -> first blocks
 \draw[flow] (noise.east) -- ++(0.28,0) |- ($(IW0)+(0,0.12)$);
@@ -124,8 +124,8 @@
   \node[img] (O\k) at (15.02+\k*1.0,5.66) {\includegraphics[width=0.95cm]{arch_ours_typical_obs_\f.png}};
   \node[lbl, below=0.5pt of O\k] {\l\,min};
 }
-\node[rotate=90, font=\fB, text=black!80] at (14.33,6.70) {generated};
-\node[rotate=90, font=\fB, text=black!80] at (14.33,5.66) {observed};
+\node[rotate=-90, font=\fB, text=black!80] at (17.78,6.70) {generated};
+\node[rotate=-90, font=\fB, text=black!80] at (17.78,5.66) {observed};
 \draw[flow] (ddim.east |- G0) -- ++(0.55,0) -- ($(G0.west)+(-0.45,0)$) -- (G0.west);
 \node[inner sep=0pt] (pvout) at (15.93,4.03) {\includegraphics{arch2_pv_out.pdf}};
 \draw[flow] (cal.east) -- ($(pvout.west |- cal.east)+(0.1,0)$);
@@ -154,7 +154,8 @@
   \end{scope}
 }
 \node[lbl] at (2.89,0.66) {$K{=}4$ maps $\mathbf A_t$};
-\draw[flow] (3.40,1.44) -- ++(0.24,0) |- node[pos=0.75, above, font=\fB, inner sep=1pt] {pool} (3.97,2.02);
+\draw[flow] (3.40,1.44) -- ++(0.24,0) |- (3.97,2.02);
+\node[lbl, anchor=east] at (3.60,2.14) {pool};
 % token rows: 16 image tokens (one per frame) and 16 PV tokens; window around PV token i
 \foreach \n in {0,...,15}{
   \pgfmathsetmacro\tx{4.02+\n*0.183}
@@ -191,8 +192,8 @@
 \end{scope}
 \draw[flow] (xt) -- (net); \draw[flow] (net) -- (x0); \draw[flow] (x0) -- (proj);
 \draw[flow, draw=black!55, rounded corners=3pt] (proj.south) -- ++(0,-0.30) -| (xt.south);
-\node[lbl, fill=panel] at ($(xt.south)!0.5!(proj.south)+(0,-0.30)$) {$\mathbf x_{\tau_{i-1}}$, repeated 20$\times$};
-\node[lbl, align=left, anchor=north west] at (12.33,1.02)
+\node[lbl, anchor=north] at ($(xt.south)!0.5!(proj.south)+(0,-0.36)$) {$\mathbf x_{\tau_{i-1}}$, repeated 20$\times$};
+\node[lbl, align=left, anchor=north west] at (12.33,0.80)
   {$\Pi_{\mathcal C}$: PV $\in[0,P_{\max}]$,\\[-0.5pt]\phantom{$\Pi_{\mathcal C}$: }pixels $\in[-1,1]$};
 \node[lbl, text=ours, anchor=east] at (18.08,2.46) {$\hat P'^{(m)}{=}\tilde P{+}s_k(\hat P^{(m)}{-}\tilde P)$};
 \node[inner sep=0pt] (calp) at (16.68,1.24) {\includegraphics{arch2_calib.pdf}};

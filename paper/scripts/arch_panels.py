@@ -78,11 +78,11 @@ rng = np.random.default_rng(3)
 fig, ax = axes(3.30, 1.50, b=0.36)
 ax.plot(hmin, hist, color="black", marker="o", ms=1.6, lw=0.7)
 ax.plot(lead, spm, color=C_SPM, ls=(0, (2.2, 1.2)), lw=0.8)
-ax.scatter(lead, np.clip(spm + 0.8 * rng.standard_normal(8), 3.5, 6.6), s=2.2, color="#8a8a8a", zorder=3, lw=0)
+ax.scatter(lead, np.clip(spm + 0.8 * rng.standard_normal(8), 4.0, 6.6), s=2.2, color="#8a8a8a", zorder=3, lw=0)
 ax.set_ylabel("kW", labelpad=0.5)
 ax.text(-14, 7.35, "history $P$", fontsize=5.8, va="center")
 ax.text(16.5, 7.35, r"anchor $\hat P^{\rm SPM}$", color=C_SPM, fontsize=5.8, va="center", ha="right")
-ax.text(16.5, 2.45, r"noisy $x^P_\tau$", color="#6f6f6f", fontsize=5.8, va="center", ha="right")
+ax.text(16.5, 2.85, r"noisy $x^P_\tau$", color="#6f6f6f", fontsize=5.8, va="center", ha="right")
 finish(fig, ax, "arch2_pv_in.pdf")
 
 # (a) output panel: calibrated 30-member forecast
