@@ -1,154 +1,200 @@
-% CSR-MMDiff architecture (compiled standalone -> fig_arch.pdf, included by main.tex)
-% All sky images and PV curves are real: test window 2019-07-14 08:12 (same window as Fig. 1 of B1).
-\documentclass[border=1pt]{standalone}
+% CSR-MMDiff architecture figure (compiled standalone -> fig_arch.pdf; included at 100 % width in main.tex).
+% Drawn at the final printed size (18.2 cm = IEEE \textwidth); smallest text 6 pt.
+% All sky frames and PV curves are real data of test window 2019-07-14 08:12 (scripts/arch_panels.py).
+\documentclass[border=0pt]{standalone}
 \usepackage{amsmath,amssymb,bm}
 \usepackage{newtxtext,newtxmath}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds}
+\usetikzlibrary{arrows.meta,calc,positioning,shadings}
 
-\definecolor{imgc}{HTML}{D6E4F5}
-\definecolor{imgd}{HTML}{3C6FB0}
-\definecolor{pvc}{HTML}{F8DEC6}
-\definecolor{pvd}{HTML}{C8651B}
-\definecolor{mmac}{HTML}{E4DDF0}
-\definecolor{mmad}{HTML}{6A4C9C}
-\definecolor{phyc}{HTML}{DDEFD9}
-\definecolor{phyd}{HTML}{3E8A3A}
-\definecolor{oursb}{HTML}{1F5FBF}
-\definecolor{spmc}{HTML}{E8692F}
-\definecolor{gry}{HTML}{6B6B6B}
+% ---------------------------------------------------------------- palette
+\definecolor{imgF}{HTML}{DCE8F7}\definecolor{imgT}{HTML}{EDF3FB}\definecolor{imgS}{HTML}{B9CFEC}\definecolor{imgD}{HTML}{2F5E9E}
+\definecolor{pvF}{HTML}{FBE3CF}\definecolor{pvD}{HTML}{B85A15}
+\definecolor{mmF}{HTML}{E9E1F4}\definecolor{mmD}{HTML}{5F4596}
+\definecolor{phF}{HTML}{DFF0DC}\definecolor{phD}{HTML}{3A7D37}
+\definecolor{smF}{HTML}{ECECEC}\definecolor{smD}{HTML}{4A4A4A}
+\definecolor{ours}{HTML}{1F5FBF}\definecolor{spm}{HTML}{E8692F}
+\definecolor{panel}{HTML}{F7F8FA}\definecolor{panelD}{HTML}{CDD2DA}
+
+\newcommand\fH{\fontsize{7.2}{8.4}\selectfont}   % panel headers
+\newcommand\fA{\fontsize{6.6}{7.6}\selectfont}   % main labels
+\newcommand\fB{\fontsize{6}{7}\selectfont}       % secondary labels
 
 \begin{document}
 \begin{tikzpicture}[
-  font=\scriptsize, >={Stealth[length=3.2pt,width=2.6pt]},
-  iblk/.style={draw=imgd, fill=imgc, rounded corners=1pt, line width=0.45pt, minimum width=0.78cm, align=center, inner sep=1pt},
-  pblk/.style={draw=pvd, fill=pvc, rounded corners=1pt, line width=0.45pt, minimum width=0.78cm, minimum height=0.46cm, align=center, inner sep=1pt},
-  mma/.style={draw=mmad, fill=mmac, rounded corners=1pt, line width=0.45pt, minimum width=0.78cm, minimum height=0.5cm, align=center, inner sep=1pt, font=\tiny},
-  phy/.style={draw=phyd, fill=phyc, rounded corners=2pt, line width=0.45pt, align=left, inner sep=2.2pt, font=\tiny},
-  lab/.style={font=\tiny, text=black!80, align=center, inner sep=0.5pt},
-  flow/.style={->, line width=0.5pt, draw=black!75},
-  skip/.style={->, dashed, line width=0.4pt, draw=black!45},
-  img/.style={inner sep=0pt, draw=black!40, line width=0.2pt},
+  >={Stealth[length=3.4pt,width=2.8pt]},
+  flow/.style={->, line width=0.55pt, draw=black!70},
+  skip/.style={->, line width=0.45pt, draw=black!40, dash pattern=on 2.2pt off 1.4pt, rounded corners=2pt},
+  couple/.style={<->, line width=0.55pt, draw=mmD},
+  pnl/.style={draw=panelD, fill=panel, rounded corners=3pt, line width=0.5pt},
+  hdr/.style={anchor=north west, inner sep=0pt, font=\fH\bfseries, text=black!85},
+  lbl/.style={font=\fB, text=black!80, inner sep=0.8pt},
+  img/.style={inner sep=0pt, draw=black!35, line width=0.25pt},
+  pill/.style={rounded corners=5pt, line width=0.5pt, inner sep=2.2pt, align=center},
 ]
+\useasboundingbox (0,-0.02) rectangle (18.2,7.62);
 
-% ------------------------------------------------------------------ geometry
-\def\yI{4.55}   % image branch
-\def\yM{2.95}   % fusion row
-\def\yP{1.30}   % PV branch
-\def\xA{4.55}   % first U-Net column
-\def\dx{1.08}   % column pitch
-\def\yF{6.25}   % feedback line
+% ================================================================ geometry
+\def\yI{6.30}\def\yP{4.00}\def\yM{4.95}
+\def\dx{0.15}\def\dy{0.11}
+% column k: x, slab height (spatial resolution), slab/bar width (channels), label
 
-% ================================================================== INPUTS
-\node[rotate=90, font=\footnotesize\bfseries, text=imgd] at (-0.05,\yI) {Sky images};
-\node[rotate=90, font=\footnotesize\bfseries, text=pvd] at (-0.05,\yP) {PV power};
 
-% history stack (last observed frame, stacked to indicate the 8 history frames)
-\foreach \o in {0.24,0.16,0.08}{
-  \node[img] at (0.95+\o,\yI+0.12+\o) {\includegraphics[width=1.05cm]{arch_ours_typical_obs_0.png}};}
-\node[img] (hist) at (0.95,\yI+0.12) {\includegraphics[width=1.05cm]{arch_ours_typical_obs_0.png}};
-\node[lab, below=1pt of hist] {history $\mathbf I_{t-14:t}$\\[-1pt](8 frames, 2 min)};
-\node[img] (noise) at (2.55,\yI+0.12) {\includegraphics[width=1.05cm]{arch_noise.png}};
-\node[lab, below=1pt of noise] {noisy residual\\[-1pt]$\mathbf x^{I}_{\tau}$ (future)};
-\node[lab, text=imgd, anchor=west] at (0.4,\yI+1.02) {target $\mathbf x^I_0=(\mathbf I_{t+k}-\mathbf I_t)/s_I$};
+% ================================================================ ROW 1: overview
+\draw[pnl] (0,3.18) rectangle (3.72,7.58);
+\draw[pnl] (3.95,3.18) rectangle (12.12,7.58);
+\draw[pnl] (12.33,3.18) rectangle (13.38,7.58);
+\draw[pnl] (13.60,3.18) rectangle (18.2,7.58);
+\node[hdr] at (0.12,7.48) {(a) Inputs};
+\node[hdr] at (4.07,7.48) {Coupled U-Net denoiser $\mathbf v_\theta$ \textmd{\fB(5.09\,M parameters; FiLM($\mathbf e_\tau$) in every block)}};
+\node[hdr] at (13.72,7.48) {Forecast $t{+}2,\dots,t{+}16$\,min};
 
-% physics prior
-\node[phy, text width=2.95cm] (phys) at (1.72,\yM-0.02) {%
-  \textbf{Physics prior} (pvlib, Ineichen)\\
-  $P^{\rm clr}$ for all 16 frames (known ahead)\\
-  anchor $\hat P^{\rm SPM}_{t+k}=k_t\,P^{\rm clr}_{t+k}$\\
-  availability flags $a_P,\;a_I\in\{0,1\}$};
+% ---- inputs -----------------------------------------------------------------
+\foreach \o in {0.18,0.12,0.06}{\node[img] at (0.92+\o,\yI+0.12+\o) {\includegraphics[width=1.02cm]{arch_ours_typical_obs_0.png}};}
+\node[img] (hist) at (0.92,\yI+0.12) {\includegraphics[width=1.02cm]{arch_ours_typical_obs_0.png}};
+\node[lbl, below=1pt of hist] {history $\mathbf I_{t-14:t}$};
+\node[img] (noise) at (2.72,\yI+0.12) {\includegraphics[width=1.02cm]{arch_noise.png}};
+\node[lbl, below=1pt of noise] {noisy future $\mathbf x^I_\tau$};
+\node[pill, draw=phD, fill=phF, font=\fB, text width=3.05cm] (phys) at (1.86,5.00)
+  {\textbf{physics prior} (pvlib clear sky)\\[-0.5pt]$P^{\rm clr}$, anchor $\hat P^{\rm SPM}$, flags $a_P,a_I$};
+\node[inner sep=0pt] (pvin) at (1.86,3.93) {\includegraphics{arch2_pv_in.pdf}};
 
-% PV input panel (real values, kW)
-\node[inner sep=0pt] (pvin) at (1.55,\yP-0.05) {\includegraphics[width=2.75cm]{arch_pv_in.pdf}};
-\node[lab, anchor=south west] at ($(pvin.north west)+(0.28,-0.08)$) {history $p$\;\textcolor{spmc}{\textbf{-\,-}} anchor\;\textcolor{gry}{$\bullet$} $\mathbf x^{P}_{\tau}$};
-\node[lab, text=pvd] at ($(pvin.south)+(0.1,-0.12)$) {target $\mathbf x^P_0=(P_{t+k}-\hat P^{\rm SPM}_{t+k})/s_P$};
-
-% timestep embedding
-\node[draw=black!60, rounded corners=1pt, fill=white, font=\tiny, inner sep=1.5pt, align=center] (temb) at (3.88,\yM+0.62) {sinusoid\\MLP};
-\node[font=\tiny] (tau) at (3.88,\yM+1.12) {$\tau$};
-\draw[flow] (tau) -- (temb);
-\node[circle, draw=black!70, fill=white, inner sep=0.6pt, font=\tiny] (et) at (3.88,\yM-0.08) {$\mathbf e_\tau$};
-\draw[flow] (temb) -- (et);
-\node[lab, align=center] at (3.88,\yM-0.5) {FiLM in\\every block};
-
-% inputs into the stems
-\draw[flow] (noise.east) -- ++(0.32,0) |- (\xA-0.48,\yI);
-\draw[flow] (pvin.east) ++(-0.05,0.05) -- (\xA-0.48,\yP);
-\draw[flow, draw=phyd] (phys.east) -- ++(0.12,0) |- (\xA-0.48,\yP+0.12);
-\draw[flow, draw=phyd] (phys.east) ++(0.12,0) |- (\xA-0.48,\yI-0.12);
-
-% ================================================================== COUPLED U-NET
-\foreach \i/\res/\ch/\h in {0/64^2/32/0.98, 1/32^2/64/0.84, 2/16^2/128/0.70, 3/8^2/256/0.58, 4/16^2/128/0.70, 5/32^2/64/0.84, 6/64^2/32/0.98}{
-  \node[iblk, minimum height=\h cm] (I\i) at (\xA+\i*\dx,\yI) {$\res$\\[-1pt]\textbf{\ch}};
-  \node[pblk] (P\i) at (\xA+\i*\dx,\yP) {\textbf{\ch}};
+% ---- coupled U-Net: image lane (3-D feature-map slabs) --------------------------
+\foreach \k/\h/\w/\r in {0/1.02/0.26/64^2, 1/0.84/0.33/32^2, 2/0.66/0.40/16^2, 3/0.50/0.47/8^2,
+                         4/0.66/0.40/16^2, 5/0.84/0.33/32^2, 6/1.02/0.26/64^2}{
+  \pgfmathsetmacro\sx{4.78+\k*1.08}
+  \pgfmathsetmacro\sL{\sx-\w/2}\pgfmathsetmacro\sR{\sx+\w/2}
+  \pgfmathsetmacro\sB{\yI-\h/2}\pgfmathsetmacro\sT{\yI+\h/2}
+  \fill[imgT, draw=imgD, line width=0.4pt] (\sL,\sT) -- ++(\dx,\dy) -- ({\sR+\dx},{\sT+\dy}) -- (\sR,\sT) -- cycle;
+  \fill[imgS, draw=imgD, line width=0.4pt] (\sR,\sB) -- ++(\dx,\dy) -- ({\sR+\dx},{\sT+\dy}) -- (\sR,\sT) -- cycle;
+  \fill[imgF, draw=imgD, line width=0.4pt] (\sL,\sB) rectangle (\sR,\sT);
+  \coordinate (IW\k) at (\sL,\yI); \coordinate (IE\k) at ({\sR+\dx/2},\yI);
+  \coordinate (IS\k) at (\sx,\sB);  \coordinate (IN\k) at ({\sx+\dx/2},{\sT+\dy});
+  \node[lbl, anchor=north east, inner sep=0.5pt] at ({\sL-0.01},\sB) {$\r$};
+  % PV lane bar (same channel width as the image block)
+  \node[draw=pvD, fill=pvF, rounded corners=1.2pt, line width=0.4pt, minimum width=\w cm+0.2cm,
+        minimum height=0.36cm, inner sep=0pt, font=\fB\bfseries, text=pvD] (P\k) at (\sx,\yP) {};
 }
-\foreach \a/\b/\t in {0/1/{\downarrow2},1/2/{\downarrow2},2/3/{\downarrow2},3/4/{\uparrow2},4/5/{\uparrow2},5/6/{\uparrow2}}{
-  \draw[flow] (I\a.east) -- node[above, font=\tiny, inner sep=1pt]{$\t$} (I\b.west);
+\foreach \k/\c in {0/32,1/64,2/128,3/256,4/128,5/64,6/32}{\node[font=\fB\bfseries, text=pvD] at (P\k) {\c};}
+\foreach \a/\b/\s in {0/1/\downarrow,1/2/\downarrow,2/3/\downarrow,3/4/\uparrow,4/5/\uparrow,5/6/\uparrow}{
+  \draw[flow] (IE\a) -- node[above, font=\fB, inner sep=0.8pt, text=black!60] {$\s2$} (IW\b);
   \draw[flow] (P\a.east) -- (P\b.west);
 }
 % skip connections (concatenation)
-\draw[skip] (I0.north) -- ++(0,0.52) -| (I6.north);
-\draw[skip] (I1.north) -- ++(0,0.34) -| (I5.north);
-\draw[skip] (I2.north) -- ++(0,0.2) -| (I4.north);
-\draw[skip] (P0.south) -- ++(0,-0.42) -| (P6.south);
-\draw[skip] (P1.south) -- ++(0,-0.28) -| (P5.south);
-\draw[skip] (P2.south) -- ++(0,-0.14) -| (P4.south);
-\node[lab] at ($(I3.north)+(0,0.88)$) {image branch: factorised 3$\times$3 spatial + temporal (kernel 3) convolution, FiLM($\mathbf e_\tau$)};
-\node[lab] at ($(P3.south)+(0,-0.58)$) {PV branch: 1-D convolution + temporal self-attention over all 16 steps, FiLM($\mathbf e_\tau$)};
-
-% cloud-aware RS-PV-MMA fusion at encoder levels 2-4 and decoder level 2
-\foreach \i/\w in {1/1,2/4,3/8,5/4}{
-  \node[mma] (M\i) at (\xA+\i*\dx,\yM) {CA-MMA\\[-1pt]$w{=}\w$};
-  \draw[<->, line width=0.45pt, draw=mmad] (I\i.south) -- (M\i.north);
-  \draw[<->, line width=0.45pt, draw=mmad] (M\i.south) -- (P\i.north);
+\draw[skip] (IN0) -- ++(0,0.34) -| (IN6);
+\draw[skip] (IN1) -- ++(0,0.34) -| (IN5);
+\draw[skip] (IN2) -- ++(0,0.30) -| (IN4);
+\draw[skip] (P0.south) -- ++(0,-0.50) -| (P6.south);
+\draw[skip] (P1.south) -- ++(0,-0.38) -| (P5.south);
+\draw[skip] (P2.south) -- ++(0,-0.26) -| (P4.south);
+% cloud-aware RS-PV-MMA couplers: encoder levels 2-4 and decoder level 2
+\foreach \k/\w in {1/1,2/4,3/8,5/4}{
+  \node[draw=mmD, fill=mmF, rounded corners=1.5pt, line width=0.45pt, minimum width=0.74cm,
+        minimum height=0.44cm, inner sep=0.5pt, align=center, font=\fB, text=mmD] (M\k) at ($(P\k)+(0,\yM-\yP)$)
+        {\textbf{CA-MMA}\\[-1.5pt]$w{=}\w$};
+  \draw[couple] (IS\k) -- (M\k.north);
+  \draw[couple] (M\k.south) -- (P\k.north);
 }
-\node[lab, text=mmad, anchor=north] at ($(M5.south)+(0.34,-0.03)$) {decoder};
-\node[lab, text=mmad, anchor=north] at ($(M2.south)+(0.34,-0.03)$) {encoder levels 2--4};
-% CA-MMA detail (the pooling that replaces global average pooling)
-\node[draw=mmad, dashed, rounded corners=2pt, font=\tiny, align=left, inner sep=2pt, text width=1.16cm, fill=white] (camma) at (\xA+4*\dx,\yM) {%
-  \textbf{CA-MMA:} $K{=}4$ learned spatial softmax maps pool each frame to one token; PV$\leftrightarrow$image cross-attn.\ for $|i{-}j|\le w$; shift $s\in\{0,\pm1\}$ (train)};
+\draw[black!30, line width=0.4pt, dash pattern=on 0.8pt off 1.2pt] ($(P3)!0.5!(P4)+(0,-0.28)$) -- ($(IS3)!0.5!(IS4)+(0,0.95)$);
+\node[lbl, text=black!55, anchor=east] at ($(P3)!0.5!(P4)+(-0.04,1.42)$) {encoder};
+\node[lbl, text=black!55, anchor=west] at ($(P3)!0.5!(P4)+(0.04,1.42)$) {decoder};
 
-% ================================================================== DDIM + OUTPUTS
-\node[draw=black!70, fill=black!6, minimum width=0.66cm, minimum height=4.45cm, rounded corners=1pt] (ddim) at (12.52,\yM) {};
-\node[rotate=90, font=\tiny, align=center] at (ddim.center) {\textbf{projected DDIM} ($\eta{=}0$, $S{=}20$)\\[1pt]
-  $\hat{\mathbf x}_0=\Pi_{\mathcal C}\big(\sqrt{\bar\alpha_\tau}\,\mathbf x_\tau-\sqrt{1-\bar\alpha_\tau}\,\hat{\mathbf v}\big)$};
-\draw[flow] (I6.east) -- node[above, font=\tiny, inner sep=1pt]{$\hat{\mathbf v}^I$} (ddim.west |- I6.east);
-\draw[flow] (P6.east) -- node[above, font=\tiny, inner sep=1pt]{$\hat{\mathbf v}^P$} (ddim.west |- P6.east);
-% feedback loop
-\draw[flow, draw=black!55] (ddim.north) |- (2.72,\yF) -- ($(noise.north)+(0.17,0)$);
-\node[font=\tiny, fill=white, inner sep=1.2pt] at (7.8,\yF) {$\mathbf x_{\tau_{i-1}}$ fed back, $S{=}20$ steps from $\mathbf x_T\sim\mathcal N(\mathbf 0,\mathbf I)$; \quad $\mathcal C$: $0\le\hat P^{\rm SPM}_{t+k}+s_P\,\hat{x}^P_{0,k}\le P_{\max}$, pixels in $[-1,1]$};
+% inputs -> first blocks
+\draw[flow] (noise.east) -- ++(0.28,0) |- ($(IW0)+(0,0.12)$);
+\draw[flow] (pvin.east |- P0) ++(-0.05,0) -- (P0.west);
+\draw[flow, draw=phD] (phys.east) -- ++(0.36,0) coordinate (pj) |- ($(IW0)+(0,-0.14)$);
+\draw[flow, draw=phD] (pj) |- ($(P0.west)+(0,0.10)$);
 
-% generated vs observed frames (first ensemble member)
-\def\xo{13.55}
-\node[lab, anchor=south west] at (\xo-0.08,\yI+0.98) {generated $\hat{\mathbf I}$ (member 1)};
+% ---- sampler column: projected DDIM and spread calibration ----------------------
+\node[draw=smD, fill=smF, rounded corners=2pt, line width=0.5pt, minimum width=0.78cm, minimum height=2.42cm]
+  (ddim) at (12.855,6.13) {};
+\node[rotate=90, font=\fA, align=center, text=black!85] at (12.855,5.93) {\textbf{projected DDIM}\\[-0.5pt]{\fB$S{=}20$ steps, $\eta{=}0$}};
+\draw[->, line width=0.55pt, draw=smD] ($(ddim.north)+(0.18,-0.27)$) arc (0:300:0.18);
+\node[font=\fB\bfseries, text=smD] at ($(ddim.north)+(0,-0.27)$) {20};
+\node[draw=ours, fill=ours!9, rounded corners=2pt, line width=0.5pt, minimum width=0.78cm, minimum height=1.12cm]
+  (cal) at (12.855,3.95) {};
+\node[rotate=90, font=\fB, align=center, text=ours] at (cal.center) {\textbf{spread}\\\textbf{cal.} $s_k$};
+\draw[flow] (IE6) -- node[above, font=\fB, inner sep=0.8pt] {$\hat{\mathbf v}^I$} (ddim.west |- IE6);
+\draw[flow] (P6.east) -- node[above, font=\fB, inner sep=0.8pt] {$\hat{\mathbf v}^P$} ++(0.42,0) |- ($(ddim.west)+(0,-0.72)$);
+\draw[flow] (ddim.south) -- (cal.north);
+
+% ---- forecast column --------------------------------------------------------
 \foreach \k/\f/\l in {0/1/{+2},1/4/{+8},2/8/{+16}}{
-  \node[img] (G\k) at (\xo+0.46+\k*1.0,\yI+0.5) {\includegraphics[width=0.93cm]{arch_ours_typical_gen_\f.png}};
-  \node[img] (O\k) at (\xo+0.46+\k*1.0,\yI-0.62) {\includegraphics[width=0.93cm]{arch_ours_typical_obs_\f.png}};
-  \node[lab, below=0.5pt of O\k] {\l\,min};
+  \node[img] (G\k) at (15.02+\k*1.0,6.70) {\includegraphics[width=0.95cm]{arch_ours_typical_gen_\f.png}};
+  \node[img] (O\k) at (15.02+\k*1.0,5.66) {\includegraphics[width=0.95cm]{arch_ours_typical_obs_\f.png}};
+  \node[lbl, below=0.5pt of O\k] {\l\,min};
 }
-\node[lab, anchor=south] at ($(O1.north)+(0,0.01)$) {observed $\mathbf I$};
-\draw[flow] (ddim.east |- G0.west) -- (G0.west);
+\node[rotate=90, font=\fB, text=black!80] at (14.33,6.70) {generated};
+\node[rotate=90, font=\fB, text=black!80] at (14.33,5.66) {observed};
+\draw[flow] (ddim.east |- G0) -- ++(0.55,0) -- ($(G0.west)+(-0.45,0)$) -- (G0.west);
+\node[inner sep=0pt] (pvout) at (15.93,4.03) {\includegraphics{arch2_pv_out.pdf}};
+\draw[flow] (cal.east) -- ($(pvout.west |- cal.east)+(0.1,0)$);
 
-% calibration + PV ensemble
-\node[draw=oursb, fill=oursb!8, rounded corners=1pt, font=\tiny, align=center, inner sep=1.5pt] (cal) at (\xo+0.42,\yM-0.12)
-  {spread cal.\\$s_k$ (val.)};
-\draw[flow] (ddim.east |- cal.west) -- (cal.west);
-\node[lab, anchor=west, align=left] at (\xo+1.0,\yM-0.12) {calibrated PV ensemble,\\$M{=}30$ members (kW)};
-\node[inner sep=0pt] (pvout) at (\xo+1.62,\yP-0.12) {\includegraphics[width=2.95cm]{arch_pv_out.pdf}};
-\draw[flow] (cal.south) -- ++(0,-0.22);
+% ================================================================ ROW 2: details
+\draw[pnl] (0,0) rectangle (7.30,2.98);
+\draw[pnl] (7.53,0) rectangle (11.98,2.98);
+\draw[pnl] (12.21,0) rectangle (18.2,2.98);
+\node[hdr] at (0.12,2.88) {(b) Cloud-aware RS-PV-MMA (CA-MMA)};
+\node[hdr] at (7.65,2.88) {(c) Clear-sky residual target};
+\node[hdr] at (12.33,2.88) {(d) Projected DDIM step and spread calibration};
 
-% ================================================================== LEGEND
-\begin{scope}[shift={(1.6,-0.40)}, font=\tiny]
-  \node[iblk, minimum width=0.34cm, minimum height=0.2cm] at (0,0) {}; \node[anchor=west] at (0.2,0) {sky-image block ($H^2$ / channels)};
-  \node[pblk, minimum width=0.34cm, minimum height=0.2cm] at (3.05,0) {}; \node[anchor=west] at (3.25,0) {PV block (channels)};
-  \node[mma, minimum width=0.34cm, minimum height=0.2cm] at (5.35,0) {}; \node[anchor=west] at (5.55,0) {CA-MMA: cloud-aware RS-PV-MMA};
-  \draw[skip] (9.05,0) -- (9.5,0); \node[anchor=west] at (9.55,0) {skip (concat.)};
-  \node[phy, minimum width=0.34cm, minimum height=0.2cm, inner sep=0pt] at (11.3,0) {}; \node[anchor=west] at (11.5,0) {physics conditioning};
-  \draw[fill=oursb!35, draw=none] (13.75,-0.07) rectangle (14.05,0.07); \node[anchor=west] at (14.08,0) {5--95\%};
-  \draw[oursb, line width=0.8pt] (14.85,0) -- (15.15,0); \node[anchor=west] at (15.17,0) {median};
-  \draw[spmc, dashed, line width=0.6pt] (16.0,0) -- (16.3,0); \node[anchor=west] at (16.32,0) {SPM};
-  \draw[black, fill=white, line width=0.4pt] (17.1,0) circle (0.055); \node[anchor=west] at (17.17,0) {obs.};
+% ---- (b) CA-MMA ------------------------------------------------------------
+% one image feature map h_t (H x W grid) with the other frames behind it
+\foreach \o in {0.16,0.08}{\fill[imgF, draw=imgD, line width=0.35pt] (0.40+\o,0.95+\o) rectangle ++(0.98,0.98);}
+\fill[imgF, draw=imgD, line width=0.4pt] (0.40,0.95) rectangle ++(0.98,0.98);
+\draw[imgD!45, line width=0.25pt, step=0.245] (0.40,0.95) grid ++(0.98,0.98);
+\node[lbl, anchor=west] at (0.20,0.66) {feature map $\mathbf h_t$};
+\draw[flow] (1.64,1.44) -- (2.34,1.44);
+\node[lbl, anchor=south] at (1.99,1.47) {softmax};
+% K = 4 learned spatial attention maps (schematic)
+\foreach \i/\j/\cx/\cy in {0/0/0.30/0.68, 1/0/0.62/0.40, 0/1/0.45/0.28, 1/1/0.72/0.72}{
+  \begin{scope}[shift={(2.40+\i*0.50,0.97+\j*0.50)}]
+    \shade[inner color=mmD!75, outer color=white] (\cx*0.44,\cy*0.44) circle (0.19);
+    \draw[mmD!70, line width=0.35pt] (0,0) rectangle (0.44,0.44);
+  \end{scope}
+}
+\node[lbl] at (2.89,0.66) {$K{=}4$ maps $\mathbf A_t$};
+\draw[flow] (3.40,1.44) -- ++(0.24,0) |- node[pos=0.75, above, font=\fB, inner sep=1pt] {pool} (3.97,2.02);
+% token rows: 16 image tokens (one per frame) and 16 PV tokens; window around PV token i
+\foreach \n in {0,...,15}{
+  \pgfmathsetmacro\tx{4.02+\n*0.183}
+  \pgfmathtruncatemacro\inwin{(\n>=6)&&(\n<=10)}
+  \ifnum\inwin=1
+    \fill[mmF, draw=mmD, line width=0.35pt] (\tx,1.94) rectangle ++(0.155,0.155);
+  \else
+    \fill[imgF, draw=imgD, line width=0.35pt] (\tx,1.94) rectangle ++(0.155,0.155);
+  \fi
+  \ifnum\n=8
+    \fill[pvD, draw=pvD, line width=0.35pt] (\tx,0.95) rectangle ++(0.155,0.155);
+  \else
+    \fill[pvF, draw=pvD, line width=0.35pt] (\tx,0.95) rectangle ++(0.155,0.155);
+  \fi
+}
+\foreach \n in {6,...,10}{\draw[mmD, line width=0.4pt] (4.02+8*0.183+0.078,1.105) -- (4.02+\n*0.183+0.078,1.94);}
+\node[lbl, anchor=west] at (3.99,2.30) {image tokens (one per frame)};
+\node[lbl, anchor=west] at (3.99,0.77) {PV tokens};
+\node[lbl, text=mmD, anchor=west] at (5.98,1.45) {$|i{-}j|\le w$};
+\draw[<->, line width=0.45pt, draw=black!55] (6.98,2.01) -- (7.20,2.01);
+\node[lbl, anchor=south] at (7.00,2.18) {shift $s$};
+\node[lbl, anchor=west] at (0.14,0.20) {bidirectional PV$\leftrightarrow$image cross-attention, added through zero-initialized projections};
+
+% ---- (c) residual target (real window) --------------------------------------
+\node[inner sep=0pt] at (9.755,1.30) {\includegraphics{arch2_resid.pdf}};
+
+% ---- (d) projected DDIM step + calibration ------------------------------------
+\node[lbl, anchor=west] at (12.33,2.48) {one reverse step (both modalities)};
+\begin{scope}[node distance=0.24cm]
+  \node[draw=black!55, fill=white, rounded corners=5pt, inner sep=2pt, font=\fA] (xt) at (12.70,1.80) {$\mathbf x_{\tau_i}$};
+  \node[draw=smD, fill=smF, rounded corners=1.5pt, inner sep=2.6pt, font=\fA, right=of xt] (net) {$\mathbf v_\theta$};
+  \node[draw=black!55, fill=white, rounded corners=5pt, inner sep=2pt, font=\fA, right=of net] (x0) {$\hat{\mathbf x}_0$};
+  \node[draw=phD, fill=phF, rounded corners=1.5pt, inner sep=2.6pt, font=\fA, right=of x0] (proj) {$\Pi_{\mathcal C}$};
 \end{scope}
+\draw[flow] (xt) -- (net); \draw[flow] (net) -- (x0); \draw[flow] (x0) -- (proj);
+\draw[flow, draw=black!55, rounded corners=3pt] (proj.south) -- ++(0,-0.30) -| (xt.south);
+\node[lbl, fill=panel] at ($(xt.south)!0.5!(proj.south)+(0,-0.30)$) {$\mathbf x_{\tau_{i-1}}$, repeated 20$\times$};
+\node[lbl, align=left, anchor=north west] at (12.33,1.02)
+  {$\Pi_{\mathcal C}$: PV $\in[0,P_{\max}]$,\\[-0.5pt]\phantom{$\Pi_{\mathcal C}$: }pixels $\in[-1,1]$};
+\node[lbl, text=ours, anchor=east] at (18.08,2.46) {$\hat P'^{(m)}{=}\tilde P{+}s_k(\hat P^{(m)}{-}\tilde P)$};
+\node[inner sep=0pt] (calp) at (16.68,1.24) {\includegraphics{arch2_calib.pdf}};
 \end{tikzpicture}
 \end{document}

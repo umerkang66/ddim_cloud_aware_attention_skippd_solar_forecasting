@@ -4,6 +4,7 @@ set -e
 cd "$(dirname "$0")/.."
 python scripts/extract_tiles.py
 python scripts/make_figures.py
+python scripts/arch_panels.py
 (cd figures && pdflatex -interaction=nonstopmode -halt-on-error fig_arch.tex > /dev/null)
 pdflatex -interaction=nonstopmode main.tex > /dev/null || true
 bibtex main > /dev/null
