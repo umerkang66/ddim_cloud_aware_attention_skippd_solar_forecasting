@@ -47,7 +47,7 @@ We previously trained two models of this class ourselves and use them as baselin
 \end{itemize}
 
 \section{Related Work}
-Sky-image regressors such as SUNSET~\cite{sun2019sunset} predict PV from stacked images and PV history. SkyGPT~\cite{nie2024skygpt} and SkyEvo~\cite{ruan2026skyevo} generate future skies and map them to PV in a second stage, whereas PV-MM-Diffusion~\cite{huang2026pvmm} adapts MM-Diffusion~\cite{ruan2023mmdiffusion} to generate both modalities at once and outperforms SkyGPT$\to$U-Net. Diffusion~\cite{ho2020ddpm} also serves video~\cite{ho2022video}, time series~\cite{rasul2021timegrad,tashiro2021csdi} and precipitation nowcasting~\cite{gao2023prediff}; DDIM~\cite{song2021ddim} and DPM-Solver++~\cite{lu2022dpmsolverpp} shorten sampling. Proper scores such as CRPS must be complemented by coverage diagnostics~\cite{gneiting2007calibration,lauret2019verification}. CSR-MMDiff instead places a physical forecast \emph{inside} the diffusion target.
+Sky-image regressors such as SUNSET~\cite{sun2019sunset} predict PV from stacked images and PV history. SkyGPT~\cite{nie2024skygpt} and SkyEvo~\cite{ruan2026skyevo} generate future skies and map them to PV in a second stage, whereas PV-MM-Diffusion~\cite{huang2026pvmm} adapts MM-Diffusion~\cite{ruan2023mmdiffusion} to generate both modalities at once and outperforms SkyGPT$\to$U-Net. Diffusion~\cite{ho2020ddpm} also serves video~\cite{ho2022video}, time series~\cite{rasul2021timegrad,tashiro2021csdi} and precipitation nowcasting~\cite{gao2023prediff}; DDIM~\cite{song2021ddim} and DPM-Solver++~\cite{lu2022dpmsolverpp} shorten sampling. Proper scores such as CRPS must be complemented by coverage diagnostics~\cite{lauret2019verification}. CSR-MMDiff instead places a physical forecast \emph{inside} the diffusion target.
 
 \begin{figure*}[t]
 \centering
@@ -136,23 +136,23 @@ where $s_k\in[0.5,3]$ minimizes the CRPS on 1{,}536 validation windows. The medi
 Method & CRPS & Skill & WS$_{90}$ & Cov. & MAE & RMSE & MBE \\
  & (kW) & (\%) & (kW) & (\%) & (kW) & (kW) & (kW) \\
 \midrule
-Smart persistence$^\dagger$ & 1.322 & 0.0 & -- & -- & 1.322 & 3.087 & $-$0.04 \\
-Two-stage \BOne$^\dagger$ & 1.498 & $-$13.4 & -- & -- & 1.498 & \textbf{2.838} & 0.17 \\
-PeEn & 1.177 & 11.0 & 18.92 & 76.9 & 1.315 & 3.087 & 0.04 \\
-Joint DDIM v1 \BOne & 1.222 & 7.5 & 10.50 & 77.9 & 1.684 & 2.960 & $-$0.76 \\
+Smart persistence$^\dagger$ & 1.322 & 0.0 & -- & -- & 1.322 & 3.087 & \textbf{$-$0.037} \\
+Two-stage \BOne$^\dagger$ & 1.498 & $-$13.3 & -- & -- & 1.498 & \textbf{2.838} & 0.172 \\
+PeEn & 1.177 & 11.0 & 18.92 & 76.9 & 1.315 & 3.087 & 0.041 \\
+Joint DDIM v1 \BOne & 1.222 & 7.6 & 10.50 & 77.9 & 1.684 & 2.960 & $-$0.763 \\
 \midrule
-Ours, PV only & 1.579 & $-$19.4 & 17.20 & 99.6 & 1.568 & 2.864 & 0.60 \\
-Ours, SI only & 1.373 & $-$3.9 & 12.60 & 89.4 & 1.812 & 3.335 & 0.53 \\
-Ours, uncalibrated & 0.995 & 24.8 & 12.33 & 57.4 & \textbf{1.243} & 2.878 & 0.21 \\
-\textbf{Ours (CSR-MMDiff)} & \textbf{0.943} & \textbf{28.7} & \textbf{9.15} & \textbf{83.2} & \textbf{1.243} & 2.878 & 0.21 \\
+Ours, PV only & 1.579 & $-$19.4 & 17.20 & 99.6 & 1.568 & 2.864 & 0.600 \\
+Ours, SI only & 1.373 & $-$3.9 & 12.60 & \textbf{89.4} & 1.812 & 3.335 & 0.530 \\
+Ours, uncalibrated & 0.995 & 24.8 & 12.33 & 57.4 & \textbf{1.243} & 2.878 & 0.208 \\
+\textbf{Ours (CSR-MMDiff)} & \textbf{0.943} & \textbf{28.7} & \textbf{9.15} & 83.2 & \textbf{1.243} & 2.878 & 0.208 \\
 \bottomrule
-\multicolumn{8}{@{}p{0.98\columnwidth}@{}}{\scriptsize $^\dagger$Deterministic: CRPS equals MAE and interval scores are undefined. \BOne\ rows from our earlier evaluation on the same windows; $R^2$: SPM 0.824, two-stage 0.851, \BOne\ 0.838, ours 0.847.}
+\multicolumn{8}{@{}p{0.98\columnwidth}@{}}{\scriptsize Bold: best per column (coverage: closest to 90\%; MBE: closest to 0). $^\dagger$Deterministic: CRPS equals MAE and interval scores are undefined. \BOne\ rows from our earlier evaluation on the same windows; $R^2$: SPM 0.824, two-stage 0.851, \BOne\ 0.838, ours 0.847.}
 \end{tabular}
 \end{table}
 
-\emph{Probabilistic accuracy.} Table~\ref{tab:main} compares all methods on identical windows. CSR-MMDiff lowers the CRPS of the \BOne\ joint model from 1.222 to \SI{0.943}{kW} ($-$22.9\%) and its WS$_{90}$ from 10.50 to \SI{9.15}{kW}. Skill over SPM rises from 7.5\% to 28.7\%, and the CRPS is 20\% below PeEn. The gain holds at every lead (Fig.~\ref{fig:lead}(a)), from 23\% skill at +2\,min, where \BOne\ was worse than SPM, to about 30\% beyond +10\,min. Withholding either modality removes the gain (PV only: \SI{1.579}{kW}, with intervals inflated by the full model's spread factors; sky images only: \SI{1.373}{kW}), so both are needed.
+\emph{Probabilistic accuracy.} Table~\ref{tab:main} compares all methods on identical windows. CSR-MMDiff lowers the CRPS of the \BOne\ joint model from 1.222 to \SI{0.943}{kW} ($-$22.9\%) and its WS$_{90}$ from 10.50 to \SI{9.15}{kW}. Skill over SPM rises from 7.6\% to 28.7\%, and the CRPS is 20\% below PeEn. The gain holds at every lead (Fig.~\ref{fig:lead}(a)), from 23\% skill at +2\,min, where \BOne\ was worse than SPM, to about 30\% beyond +10\,min. Withholding either modality removes the gain (PV only: \SI{1.579}{kW}, with intervals inflated by the full model's spread factors; sky images only: \SI{1.373}{kW}), so both are needed.
 
-\emph{Calibration.} The raw ensemble is sharp but under-dispersed: its 90\% intervals cover only 57.4\% of observations. The fitted spread factors are almost constant ($s_k=2.20,2.25,2.20,2.15,2.00,2.05,2.00,1.95$ from +2 to +16\,min), which points to a systematic rather than lead-dependent deficit. Calibration raises coverage to 83.2\%, lowers WS$_{90}$ by 25.8\% and the CRPS by 5.2\%. Coverage stays between 81\% and 85\% at every lead (Fig.~\ref{fig:lead}(b)), whereas \BOne\ decayed from 81.6\% to 75.1\%. Our intervals are also \emph{narrower} (2.7--\SI{4.7}{kW} vs.\ 3.7--\SI{6.1}{kW}; Fig.~\ref{fig:lead}(c)), i.e., sharper and more reliable, though still 6.8 points below nominal.
+\emph{Calibration.} The raw ensemble is sharp but under-dispersed: its 90\% intervals cover only 57.4\% of observations. The fitted spread factors are almost constant ($s_k=2.20,2.25,2.20,2.15,2.00,2.05,2.00,1.95$ from +2 to +16\,min), which points to a systematic rather than lead-dependent deficit. Calibration raises coverage to 83.2\%, lowers WS$_{90}$ by 25.8\% and the CRPS by 5.2\%. Coverage stays between 81.0\% and 85.1\% at every lead (Fig.~\ref{fig:lead}(b)), whereas \BOne\ decayed from 81.6\% to 75.1\%. Our intervals are also \emph{narrower} (2.7--\SI{4.7}{kW} vs.\ 3.7--\SI{6.1}{kW}; Fig.~\ref{fig:lead}(c)), i.e., sharper and more reliable, though still 6.8 points below nominal.
 
 \emph{Point accuracy.} Because the zero residual equals SPM, the median no longer falls behind persistence: its MAE of \SI{1.243}{kW} is 6.0\% below SPM and 26.2\% below \BOne, and the low bias of \BOne\ ($-$\SI{0.76}{kW}) becomes a small positive one (+\SI{0.21}{kW}). The 99th-percentile absolute error drops from 14.72 (SPM) to \SI{13.11}{kW}; the two-stage pipeline keeps the lowest RMSE. On the three clear days of Fig.~\ref{fig:days} the median tracks the observation (MAE 0.10--\SI{0.13}{kW} vs.\ 0.74--\SI{1.38}{kW} for \BOne) without \BOne's spurious afternoon dips. On the two most variable days, however, it reproduces ramps late, like persistence, and its +16\,min MAE exceeds \BOne's (3.44 vs.\ 2.94 and 4.05 vs.\ \SI{3.12}{kW}), although its interval covers more observations (75\% vs.\ 62\%).
 
@@ -175,15 +175,15 @@ Method & Test protocol & CRPS & WS$_{90}$ & Cov. & Skill \\
  & & (kW) & (kW) & (\%) & (\%) \\
 \midrule
 PeEn & \multirow{2}{*}{\shortstack[l]{5 variable days,\\1{,}199 cloudy win.}} & 3.488 & 58.00 & 38.5 & 8.9 \\
-\textbf{Ours (CSR-MMDiff)} & & \textbf{2.856} & 26.95 & \textbf{76.1} & 25.4 \\
+\textbf{Ours (CSR-MMDiff)} & & \textbf{2.856} & \textbf{26.95} & \textbf{76.1} & \textbf{25.4} \\
 \midrule
 SkyGPT$\to$U-Net~\cite{nie2024skygpt} & \multirow{2}{*}{\shortstack[l]{\BThree: 5 cloudy\\days, 2{,}582 win.}} & 3.21 & 35.62 & -- & 12.5 \\
 PV-MM-Diffusion \BThree & & \textbf{2.63} & \textbf{21.46} & -- & \textbf{28.3} \\
 \midrule
-DDIM $S{=}10$, $\eta{=}0.5$ \BTwo & 20 days, +16\,min & 1.144 & 11.80 & $\approx$70 & 41.4$^\ast$ \\
-Ours at +16\,min & 20 days, +16\,min & 1.198 & -- & 83.1 & 29.7 \\
+DDIM $S{=}10$, $\eta{=}0.5$ \BTwo & 20 days, +16\,min & \textbf{1.144} & 11.80 & $\approx$70 & \textbf{41.4}$^\ast$ \\
+Ours at +16\,min & 20 days, +16\,min & 1.198 & -- & \textbf{83.1} & 29.7 \\
 \bottomrule
-\multicolumn{6}{@{}p{0.98\columnwidth}@{}}{\scriptsize Skill vs.\ each study's SPM (\BThree: \SI{3.67}{kW}; ours, cloudy: \SI{3.830}{kW}). $^\ast$6{,}627 windows, solar-geometry SPM surrogate; 64.8\% coverage on \BTwo's matched subset (DDPM: 87.5\%).}
+\multicolumn{6}{@{}p{0.98\columnwidth}@{}}{\scriptsize Bold: best within each protocol (coverage: closest to 90\%). Skill vs.\ each study's SPM (\BThree: \SI{3.67}{kW}; ours, cloudy: \SI{3.830}{kW}). $^\ast$6{,}627 windows, solar-geometry SPM surrogate; 64.8\% coverage on \BTwo's matched subset (DDPM: 87.5\%).}
 \end{tabular}
 \end{table}
 
