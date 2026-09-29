@@ -22,7 +22,7 @@
 
 \title{CSR-MMDiff: Clear-Sky-Residual Diffusion for\\Calibrated Probabilistic PV Forecasting}
 
-\author{\IEEEauthorblockN{Muhammad Umer, Haseeb Khan, Dr. Jameel Ahmad, Dr. Abdul Hameed}
+\author{\IEEEauthorblockN{Muhammad Umer, Haseeb Khan, Jameel Ahmad, Abdul Hameed}
 \IEEEauthorblockA{\textit{Department of Computer Science, SST, University of Management and Technology}, Lahore 54770, Pakistan\\
 f2023266912@umt.edu.pk, f20232661009@umt.edu.pk, jameel.ahmad@umt.edu.pk, abdul\_hameed@umt.edu.pk}}
 
@@ -56,7 +56,7 @@ Sky-image regressors such as SUNSET~\cite{sun2019sunset} predict PV from stacked
 \label{fig:arch}
 \end{figure*}
 
-\section{Method}
+\section{Methodology}
 \subsection{Clear-Sky-Residual Formulation}
 Let $\mathbf I_t\in\mathbb R^{64\times64\times3}$ be the sky image and $P_t\in[0,P_{\max}]$ the PV power ($P_{\max}=\SI{30}{kW}$), sampled every 2\,min. Given the history $\mathcal H=\{\mathbf I_{t-2j},P_{t-2j}\}_{j=0}^{7}$, the model samples the future $\{\mathbf I_{t+k},P_{t+k}\}$, $k\in\{2,\dots,16\}$\,min. The clear-sky power $\Pclr$ is the pvlib Ineichen clear-sky irradiance~\cite{holmgren2018pvlib} scaled to $P_{\max}$; the time zone of the unlabelled SKIPP'D timestamps is chosen by maximum correlation with the measured PV (America/Los\_Angeles, $\rho=0.881$). Smart persistence (SPM) holds the clear-sky index constant,
 \begin{equation}
