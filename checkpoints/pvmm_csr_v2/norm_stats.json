@@ -1,0 +1,7 @@
+{
+  "K_CLIM": 0.8420521020889282,
+  "R_SCALE": 3.9602317810058594,
+  "IMG_SCALE": 0.16512401401996613,
+  "clear_sky_tz": "America/Los_Angeles",
+  "clear_sky_source": "pvlib Ineichen"
+}
