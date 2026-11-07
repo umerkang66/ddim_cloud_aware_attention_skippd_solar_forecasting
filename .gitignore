@@ -1,6 +1,3 @@
 aienv
-checkpoints
 .vscode
-test_checkpoints_resume
-checkpoints_backup
 *.bbl
