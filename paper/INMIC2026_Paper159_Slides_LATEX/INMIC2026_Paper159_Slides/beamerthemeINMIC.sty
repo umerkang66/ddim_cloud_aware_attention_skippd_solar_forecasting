@@ -1,0 +1,103 @@
+% =====================================================================
+%  beamerthemeINMIC.sty -- INMIC 2026 / UMT SST presentation theme
+%  Colours follow the INMIC 2026 banner (navy + gold).
+%  Logos expected next to the .tex file: inmic_mark.png, inmic_word.png,
+%  umt_sst.png
+% =====================================================================
+\mode<presentation>
+
+\RequirePackage[scaled=0.95]{helvet}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{graphicx}
+\RequirePackage{booktabs}
+\RequirePackage{colortbl}
+\RequirePackage[most]{tcolorbox}
+
+% ---- palette ---------------------------------------------------------
+\definecolor{inmicNavy}{HTML}{0E2A63}
+\definecolor{inmicNavyLight}{HTML}{183A7D}
+\definecolor{inmicGold}{HTML}{E3A62A}
+\definecolor{inmicGoldDark}{HTML}{9A6A0E}
+\definecolor{inmicPaper}{HTML}{F6F7FB}
+\definecolor{inmicBody}{HTML}{3A4458}
+\definecolor{inmicMuted}{HTML}{5B6478}
+\definecolor{inmicRule}{HTML}{D9DEEA}
+\definecolor{inmicCream}{HTML}{FBF1DC}
+\definecolor{inmicRow}{HTML}{EEF1F7}
+\definecolor{inmicOnDark}{HTML}{C9D4EC}
+
+\usefonttheme{professionalfonts}
+\renewcommand{\familydefault}{\sfdefault}
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{background canvas}{bg=inmicPaper}
+\setbeamercolor{normal text}{fg=inmicBody}
+\setbeamercolor{alerted text}{fg=inmicGoldDark}
+\setbeamercolor{structure}{fg=inmicNavy}
+\setbeamercolor{frametitle}{fg=inmicNavy}
+\setbeamercolor{eyebrow}{fg=inmicGoldDark}
+\setbeamercolor{footer}{fg=inmicMuted}
+\setbeamerfont{frametitle}{size=\Large,series=\bfseries}
+\setbeamerfont{eyebrow}{size=\scriptsize,series=\bfseries}
+\setbeamertemplate{itemize items}{\color{inmicGold}\textbullet}
+\setbeamertemplate{caption}{\insertcaption}
+
+% ---- frame title: small gold "eyebrow" (= frame subtitle) above title --
+\setbeamertemplate{frametitle}{%
+  \vskip 0.6em
+  \ifx\insertframesubtitle\@empty\else
+    {\usebeamerfont{eyebrow}\usebeamercolor[fg]{eyebrow}\MakeUppercase{\insertframesubtitle}\par}%
+    \vskip 0.25em
+  \fi
+  {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle\par}%
+  \vskip 0.2em}
+
+% ---- footline: short title | logos + page number -----------------------
+\newcommand{\inmicfootertext}{}
+\setbeamertemplate{footline}{%
+  \leavevmode
+  \hbox to \paperwidth{\hskip 0.9cm
+    \begin{minipage}[b]{\dimexpr\paperwidth-1.8cm}
+      {\color{inmicRule}\rule{\linewidth}{0.6pt}}\par\vskip 2pt
+      {\tiny\usebeamercolor[fg]{footer}\inmicfootertext}\hfill
+      \colorbox{inmicPaper}{\raisebox{-0.25\height}{\includegraphics[height=0.32cm]{inmic_word.png}}\hspace{0.18cm}%
+        \raisebox{-0.3\height}{\includegraphics[height=0.5cm]{umt_sst.png}}}%
+      \hspace{0.2cm}{\tiny\usebeamercolor[fg]{footer}\insertframenumber}
+    \end{minipage}\hfill}%
+  \vskip 0.25cm}
+
+% ---- dark statement frames: use \begin{darkframe}...\end{darkframe} -----
+\newenvironment{darkframe}{%
+  \setbeamercolor{background canvas}{bg=inmicNavy}%
+  \setbeamercolor{normal text}{fg=inmicPaper}%
+  \setbeamercolor{frametitle}{fg=inmicPaper}%
+  \setbeamercolor{eyebrow}{fg=inmicGold}%
+  \setbeamercolor{footer}{fg=inmicOnDark}%
+  \usebeamercolor[fg]{normal text}}{}
+
+% ---- boxes -----------------------------------------------------------------
+\tcbset{inmicbase/.style={enhanced,arc=2.5mm,boxrule=0.4pt,left=2.2mm,right=2.2mm,top=1.6mm,bottom=1.6mm,
+  fonttitle=\bfseries\small,coltitle=inmicNavy,colbacktitle=white,attach title to upper=\par\vspace{0.6mm},halign=flush left}}
+\newtcolorbox{card}[2][]{inmicbase,colback=white,colframe=inmicRule,title={#2},#1}
+\newtcolorbox{goldcard}[2][]{inmicbase,colback=white,colframe=inmicRule,borderline north={1.6pt}{0pt}{inmicGold},title={#2},#1}
+\newtcolorbox{navycard}[2][]{inmicbase,colback=white,colframe=inmicRule,borderline north={1.6pt}{0pt}{inmicNavy},title={#2},#1}
+\newtcolorbox{darkcard}[2][]{inmicbase,colback=inmicNavyLight,colframe=inmicNavyLight,coltitle=inmicGold,colupper=inmicOnDark,title={#2},#1}
+\newtcolorbox{callout}[1][]{enhanced,arc=2mm,boxrule=0pt,colback=inmicCream,colupper=inmicNavy,halign=flush left,
+  borderline west={1.6mm}{0pt}{inmicGold},left=3mm,right=3mm,top=1.8mm,bottom=1.8mm,#1}
+\newtcolorbox{bignum}[1][]{enhanced,arc=2.5mm,boxrule=0pt,colback=inmicNavy,colupper=inmicPaper,halign=flush left,left=3mm,right=3mm,top=2mm,bottom=2mm,#1}
+\newcommand{\bigtxt}[1]{{\fontsize{22}{24}\selectfont\bfseries\color{inmicGold}#1}}
+\newcommand{\headrow}{\rowcolor{inmicNavy}}
+\newcommand{\hlrow}{\rowcolor{inmicCream}}
+\newcommand{\thc}[1]{\textcolor{inmicPaper}{\bfseries #1}}
+
+% ---- title page ------------------------------------------------------------
+\setbeamertemplate{title page}{%
+  \vskip -0.2cm
+  \noindent\includegraphics[height=2.6cm]{inmic_mark.png}\hfill\includegraphics[height=1.8cm]{umt_sst.png}\par
+  \vskip 0.5cm
+  {\usebeamerfont{eyebrow}\color{inmicGoldDark}\MakeUppercase{\insertsubtitle}\par}\vskip 0.2cm
+  {\Large\bfseries\color{inmicNavy}\inserttitle\par}\vskip 0.45cm
+  {\small\bfseries\color{inmicNavy}\insertauthor\par}\vskip 0.1cm
+  {\scriptsize\color{inmicMuted}\insertinstitute\par}\vskip 0.05cm
+  {\scriptsize\color{inmicMuted}\insertdate\par}}
+
+\mode<all>
